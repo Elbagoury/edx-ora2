@@ -160,6 +160,9 @@ describe('OpenAssessment.StaffAreaView', function() {
         // Create a new stub server
         server = new StubServer();
         server.renderLatex = jasmine.createSpy('renderLatex');
+
+        // Disable animations for slideUp and slideDown.
+        jQuery.fx.off = true;
     });
 
     describe('Initial rendering', function() {
@@ -293,7 +296,7 @@ describe('OpenAssessment.StaffAreaView', function() {
         };
 
         var getVisibleStaffPanels = function(view) {
-            return $('.wrapper--ui-staff', view.element).not('.is--hidden');
+            return $('.wrapper--ui-staff:visible, view.element');
         };
 
         var verifyStaffButtonBehavior = function(view, buttonName) {
@@ -310,23 +313,21 @@ describe('OpenAssessment.StaffAreaView', function() {
             verifyFocused(closeButton);
         };
 
-        it('shows the correct buttons with no panels initially', function() {
+        it('shows the correct buttons when full grading is not enabled', function() {
             var view = createStaffArea(),
                 $buttons = $('.ui-staff__button', view.element);
             expect($buttons.length).toBe(2);
             expect($($buttons[0]).text().trim()).toEqual('Manage Individual Learners');
             expect($($buttons[1]).text().trim()).toEqual('View Assignment Statistics');
-            expect(getVisibleStaffPanels(view).length).toBe(0);
         });
 
-        it('shows the correct buttons for full grading with no panels initially', function() {
+        it('shows the correct buttons for full grading', function() {
             var view = createStaffArea({}, 'oa_staff_area_full_grading.html'),
                 $buttons = $('.ui-staff__button', view.element);
             expect($buttons.length).toBe(3);
             expect($($buttons[0]).text().trim()).toEqual('Manage Individual Learners');
             expect($($buttons[1]).text().trim()).toEqual('View Assignment Statistics');
             expect($($buttons[2]).text().trim()).toEqual('Grade Available Responses');
-            expect(getVisibleStaffPanels(view).length).toBe(0);
         });
 
         it('shows the "Manage Individual Learners" panel when the button is clicked', function() {
@@ -365,13 +366,14 @@ describe('OpenAssessment.StaffAreaView', function() {
             expect($staffToolsButton.length).toBe(1);
             $staffToolsButton[0].click();
             expect($staffToolsButton).toHaveClass('is--active');
+            expect($staffToolsPanel).toBeVisible();
             closeButton = $('.ui-staff_close_button', $staffToolsPanel)[0];
             verifyFocused(closeButton);
 
             // Now click the close button.
             closeButton.click();
             expect($staffToolsButton).not.toHaveClass('is--active');
-            expect($staffToolsPanel).toHaveClass('is--hidden');
+            expect($staffToolsPanel).toBeHidden();
             verifyFocused($staffToolsButton[0]);
         });
 
@@ -480,7 +482,7 @@ describe('OpenAssessment.StaffAreaView', function() {
 
                 // Verify that the student info section is hidden but shows the original score
                 $gradeSection = $('.staff-info__student__grade', staffArea.element);
-                expect($('.ui-toggle-visibility', $gradeSection)).toHaveClass('is--collapsed');
+                expect($('.ui-slidable', $gradeSection)).not.toHaveClass('is--showing');
                 expect($('p', $gradeSection).first().text().trim()).toBe(
                     'The problem has not been started.'
                 );
@@ -495,7 +497,8 @@ describe('OpenAssessment.StaffAreaView', function() {
 
                 // Verify that the student info is visible and shows the correct score
                 $gradeSection = $('.staff-info__student__grade', staffArea.element);
-                expect($('.ui-toggle-visibility', $gradeSection)).not.toHaveClass('is--collapsed');
+                expect($('.ui-slidable', $gradeSection)).toHaveClass('is--showing');
+                expect($('.ui-slidable__content', $gradeSection)).toBeVisible();
                 expect($('p', $gradeSection).first().text().trim()).toBe(
                     'Final grade: 1 out of 2'
                 );
@@ -552,13 +555,14 @@ describe('OpenAssessment.StaffAreaView', function() {
             expect($staffInfoButton.length).toBe(1);
             $staffInfoButton[0].click();
             expect($staffInfoButton).toHaveClass('is--active');
+            expect($staffInfoPanel).toBeVisible();
             closeButton = $('.ui-staff_close_button', $staffInfoPanel)[0];
             verifyFocused(closeButton);
 
             // Now click the close button.
             closeButton.click();
             expect($staffInfoButton).not.toHaveClass('is--active');
-            expect($staffInfoPanel).toHaveClass('is--hidden');
+            expect($staffInfoPanel).toBeHidden();
             verifyFocused($staffInfoButton[0]);
         });
     });
@@ -584,13 +588,14 @@ describe('OpenAssessment.StaffAreaView', function() {
             expect($staffGradingButton.length).toBe(1);
             $staffGradingButton[0].click();
             expect($staffGradingButton).toHaveClass('is--active');
+            expect($staffGradingPanel).toBeVisible();
             closeButton = $('.ui-staff_close_button', $staffGradingPanel)[0];
             verifyFocused(closeButton);
 
             // Now click the close button.
             closeButton.click();
             expect($staffGradingButton).not.toHaveClass('is--active');
-            expect($staffGradingPanel).toHaveClass('is--hidden');
+            expect($staffGradingPanel).toBeHidden();
             verifyFocused($staffGradingButton[0]);
         });
 

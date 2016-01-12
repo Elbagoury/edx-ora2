@@ -479,6 +479,8 @@ class StaffAreaPage(OpenAssessmentPage, AssessmentMixin):
         Presses the button to show the panel with the specified name.
         :return:
         """
+        # Disable JQuery animations (for slideUp/slideDown).
+        self.browser.execute_script("jQuery.fx.off = true;")
         buttons = self.q(css=self._bounded_selector(".button-{button_name}".format(button_name=button_name)))
         buttons.first.click()
 
@@ -572,7 +574,7 @@ class StaffAreaPage(OpenAssessmentPage, AssessmentMixin):
         Expands all the sections in the learner report.
         """
         self.wait_for_section_titles()
-        self.q(css=self._bounded_selector(".ui-staff__subtitle")).click()
+        self.q(css=self._bounded_selector(".ui-staff__subtitle>span")).click()
 
     @property
     def learner_final_score(self):
@@ -617,7 +619,7 @@ class StaffAreaPage(OpenAssessmentPage, AssessmentMixin):
     @property
     def learner_response(self):
         return self.q(
-            css=self._bounded_selector(".staff-info__student__response .ui-toggle-visibility__content")
+            css=self._bounded_selector(".staff-info__student__response .ui-slidable__content")
         ).text[0]
 
     def staff_assess(self, options_selected, grading_type, continue_after=False):

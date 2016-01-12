@@ -17,33 +17,32 @@
     border-top: ($baseline-v/4) solid $color-decorative-staff;
     padding: $baseline-v ($baseline-h/2);
     background: $staff-bg;
+    display: none;
   }
 
   .ui-staff {
 
-    // CASE: area is collapse/expand friendly
-    &.ui-toggle-visibility {
-
-      .staff-info__title__copy {
-        @include margin-left(($baseline-h/4));
-      }
-
-      // STATE: is collapsed
-      &.is--collapsed {
-
-        .ui-staff__content {
-          margin-top: 0;
-        }
-
-        .staff-info__cancel-submission__content,
-        .staff-info__staff-override__content {
-          padding: 0;
+    .ui-slidable {
+      &:not(.is--showing) {
+        .ui-slidable__content {
+          display: none;
         }
       }
 
-      .ui-toggle-visibility__content {
-        @include margin-left(($baseline-h/4));
-        margin-bottom: ($baseline-v/2);
+      .ui-slidable__control {
+        @extend %fake-link;
+      }
+
+      .ui-slidable__control.icon {
+        @include transition(all $tmg-f2 ease-in-out 0s);
+        @include transform(rotate(bidi-rotate-angle(0deg)));
+      }
+
+      &.is--showing {
+        .ui-slidable__control.icon {
+          @include transform(rotate(bidi-rotate-angle(90deg)));
+          @include transform-origin(50% 50%);
+        }
       }
     }
   }
@@ -241,10 +240,15 @@
 
   // Styling for staff grade tab ("Grade Available Responses").
   .ui-staff {
+
     .staff__grade__control {
       border-top: ($baseline-v/4) solid $color-decorative-tertiary;
       background: $bg-content;
       background-color: $bg-content;
+
+      .staff__grade__header {
+        padding-bottom: $baseline-v;
+      }
 
       .staff__grade__title {
         @include text-align(left);
@@ -325,12 +329,12 @@
       }
 
       .wrapper--input {
-        padding-top: 0;
+        padding-top: ($baseline-h/4);
       }
     }
 
     // Override the default color for h3 (for elements that can be toggled).
-    .ui-toggle-visibility .ui-toggle-visibility__control .staff__grade__title {
+    .ui-slidable__control .staff__grade__title {
       color: $action-primary-color;
     }
   }

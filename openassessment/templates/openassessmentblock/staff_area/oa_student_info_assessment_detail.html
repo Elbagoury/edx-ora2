@@ -1,11 +1,11 @@
 {% load i18n %}
 <div class="staff-info__status ui-staff__content__section wrapper--ui--collapse staff-info__{{ class_type }}__assessments">
-    <div class="ui-staff ui-toggle-visibility is--collapsed">
-        <h2 class="staff-info__title ui-staff__subtitle ui-toggle-visibility__control">
-            <i class="icon fa fa-caret-right" aria-hidden="true"></i>
-            <span>{{ translated_title }}</span>
+    <div class="ui-staff ui-slidable" role="button" aria-pressed="false" tabindex="0">
+        <h2 class="staff-info__title ui-staff__subtitle">
+            <i class="icon fa fa-caret-right ui-slidable__control" aria-hidden="true"></i>
+            <span class="ui-slidable__control">{{ translated_title }}</span>
         </h2>
-        <div class="ui-toggle-visibility__content">
+        <div class="ui-slidable__content">
             {% for assessment in assessments %}
                 {% with assessment_num=forloop.counter %}
                     {% if assessments|length > 1 %}

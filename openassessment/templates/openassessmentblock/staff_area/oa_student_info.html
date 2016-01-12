@@ -13,12 +13,12 @@
     </h2>
 
     <div class="staff-info__status ui-staff__content__section wrapper--ui--collapse staff-info__student__response">
-        <div class="ui-staff ui-toggle-visibility is--collapsed">
-            <h2 class="staff-info__title ui-staff__subtitle ui-toggle-visibility__control">
-                <i class="icon fa fa-caret-right" aria-hidden="true"></i>
-                <span>{% trans "Learner's Response" %}</span>
+        <div class="ui-staff ui-slidable" role="button" aria-pressed="false" tabindex="0">
+            <h2 class="staff-info__title ui-staff__subtitle">
+                <i class="icon fa fa-caret-right ui-slidable__control" aria-hidden="true"></i>
+                <span class="ui-slidable__control">{% trans "Learner's Response" %}</span>
             </h2>
-            <div class="ui-toggle-visibility__content">
+            <div class="ui-slidable__content">
                 {% if workflow_cancellation %}
                     <p>
                         {% if workflow_cancellation.cancelled_by %}
@@ -76,12 +76,12 @@
     {% endif %}
 
     <div class="staff-info__status ui-staff__content__section wrapper--ui--collapse staff-info__student__grade">
-        <div class="ui-staff ui-toggle-visibility {% if expanded_view != 'final-grade' %}is--collapsed {% endif %}">
-            <h2 class="staff-info__title ui-staff__subtitle ui-toggle-visibility__control">
-                <i class="icon fa fa-caret-right" aria-hidden="true"></i>
-                <span>{% trans "Learner's Final Grade" %}</span>
+        <div class="ui-staff ui-slidable {% if expanded_view == 'final-grade' %}is--showing{% endif %}" role="button" aria-pressed="{% if expanded_view == 'final-grade' %}true{% else %}false{% endif %}" tabindex="0">
+            <h2 class="staff-info__title ui-staff__subtitle">
+                <i class="icon fa fa-caret-right ui-slidable__control" aria-hidden="true"></i>
+                <span class="ui-slidable__control">{% trans "Learner's Final Grade" %}</span>
             </h2>
-            <div class="ui-toggle-visibility__content">
+            <div class="ui-slidable__content">
                 {% if workflow_status == "done" %}
                     <p class="staff-info__final__grade__score">
                     {% with points_earned_string=score.points_earned|stringformat:"s" points_possible_string=score.points_possible|stringformat:"s" %}
@@ -145,13 +145,13 @@
 
     {% if not workflow_cancellation %}
         <div class="staff-info__staff-override ui-staff__content__section wrapper--ui--collapse">
-            <div class="ui-staff ui-toggle-visibility {% if expanded_view != 'staff-override' %}is--collapsed {% endif %}">
-                <h2 class="staff-info__title ui-staff__subtitle ui-toggle-visibility__control">
-                    <i class="icon fa fa-caret-right" aria-hidden="true"></i>
-                    <span>{% trans "Submit Assessment Grade Override" %}</span>
+            <div class="ui-staff ui-slidable ui-slidable" role="button" aria-pressed="false" tabindex="0">
+                <h2 class="staff-info__title ui-staff__subtitle">
+                    <i class="icon fa fa-caret-right ui-slidable__control" aria-hidden="true"></i>
+                    <span class="ui-slidable__control">{% trans "Submit Assessment Grade Override" %}</span>
                 </h2>
 
-                <div class="staff-info__staff-override__content ui-toggle-visibility__content">
+                <div class="staff-info__staff-override__content ui-slidable__content">
                     <div class="wrapper--input">
                         {% include "openassessmentblock/staff_area/oa_staff_override_assessment.html" %}
                     </div>
@@ -160,13 +160,13 @@
         </div>
 
         <div class="staff-info__workflow-cancellation ui-staff__content__section wrapper--ui--collapse">
-            <div class="ui-staff ui-toggle-visibility is--collapsed">
-                <h2 class="staff-info__title ui-staff__subtitle ui-toggle-visibility__control">
-                    <i class="icon fa fa-caret-right" aria-hidden="true"></i>
-                    <span>{% trans "Remove Submission From Peer Grading" %}</span>
+            <div class="ui-staff ui-slidable" role="button" aria-pressed="false" tabindex="0">
+                <h2 class="staff-info__title ui-staff__subtitle">
+                    <i class="icon fa fa-caret-right ui-slidable__control" aria-hidden="true"></i>
+                    <span class="ui-slidable__control">{% trans "Remove Submission From Peer Grading" %}</span>
                 </h2>
 
-                <div class="staff-info__cancel-submission__content ui-toggle-visibility__content">
+                <div class="staff-info__cancel-submission__content ui-slidable__content">
                     <div class="wrapper--input">
                         <form data-submission-uuid="{{ submission.uuid }}">
 

@@ -109,6 +109,44 @@
                             }
                         );
                     }
+
+                    var toggleSlidable = function(event) {
+                        if (
+                            event.target === event.currentTarget ||
+                            $(event.target).hasClass('ui-slidable__control')
+                        ) {
+                            var $toggle = $(event.currentTarget),
+                                $content = $toggle.find('.ui-slidable__content').first();
+
+                            if ($toggle.hasClass('is--showing')) {
+                                $toggle.removeClass('is--showing');
+                                $toggle.attr('aria-pressed', 'false');
+                                $content.slideUp();
+                            } else {
+                                $toggle.addClass('is--showing');
+                                $toggle.attr('aria-pressed', 'true');
+                                $content.slideDown();
+                            }
+                        }
+                    };
+
+                    $manageLearnersTab.find('.ui-slidable').click(
+                        function(event) {
+                            toggleSlidable(event);
+                        }
+                    );
+
+                    $manageLearnersTab.find('.ui-slidable').keypress(
+                        function(event) {
+                            var KEY_ENTER = 13;
+                            var KEY_SPACE = 32;
+                            if (event.which === KEY_ENTER || event.which === KEY_SPACE) {
+                                event.preventDefault();
+                                toggleSlidable(event);
+                            }
+                        }
+                    );
+
                     deferred.resolve();
                 }).fail(function() {
                     showFormError(gettext('Unexpected server error.'));
@@ -125,27 +163,28 @@
          * Upon request, loads the staff grade/assessment section of the staff area.
          * This allows staff grading when staff assessment is a required step.
          *
-         * @param {boolean} clearAndCollapse if true, clear the staff grade form and collapse it. Otherwise
-         *     render the staff grade form if is not already loaded.
          * @returns {promise} A promise representing the successful loading
          * of the staff grade (assessment) section.
          */
-        loadStaffGradeForm: function(clearAndCollapse) {
+        loadStaffGradeForm: function() {
             var view = this;
             var $staffGradeTab = $('.openassessment__staff-grading', this.element);
+            var $staffGradeControl = $staffGradeTab.find('.staff__grade__control');
             var deferred = $.Deferred();
             var showFormError = function(errorMessage) {
                 $staffGradeTab.find('.staff__grade__form--error').text(errorMessage);
             };
 
-            if (clearAndCollapse) {
-                // Collapse the editor and update the counts.
-                $staffGradeTab.find('.staff__grade__control').toggleClass('is--collapsed', true);
-                $staffGradeTab.find('.staff__grade__form').replaceWith('<div class="staff__grade__form"></div>');
-                view.updateStaffGradeCounts();
+            $staffGradeControl.toggleClass('is--showing', true);
+            if (this.staffGradeFormLoaded) {
+                $staffGradeControl.find('.ui-slidable__content').slideDown(
+                    0,  // If transition is visible, the shrinking/growing of the form is seen.
+                    function() {  // This is to work around a JQuery bug (fixed in recent versions of JQuery).
+                        $('.ui-slidable__content').css('overflow', 'visible');
+                    });
                 deferred.resolve();
             }
-            else if (!this.staffGradeFormLoaded) {
+            else {
                 this.staffGradeFormLoaded = true;
                 this.server.staffGradeForm().done(function(html) {
                     showFormError('');
@@ -179,6 +218,10 @@
                             }
                         );
                     }
+                    // For accessibility, move focus to the staff grade form control
+                    // (since this code may have executed as part of "Submit and Grade Next...").
+                    $staffGradeControl.find('.staff__grade__show-form').focus();
+
                     deferred.resolve();
                 }).fail(function() {
                     showFormError(gettext('Unexpected server error.'));
@@ -188,6 +231,38 @@
             }
 
             return deferred.promise();
+        },
+
+        /**
+         * Closes the staff grade/assessment section of the staff area.
+         *
+         * @param {boolean} clear if true, remove the staff grade form and collapse it. Otherwise
+         *     the staff grade form is collapsed but not removed (meaning that the same
+         *     form will be presented if the user later expands the staff grade section again).
+         */
+        closeStaffGradeForm: function(clear) {
+            var $staffGradeTab = $('.openassessment__staff-grading', this.element);
+            var $staffGradeControl = $staffGradeTab.find('.staff__grade__control');
+
+            $staffGradeControl.toggleClass('is--showing', false);
+            if (clear) {
+                // Collapse the editor and update the counts.
+                // This is the case of submitting an assessment and NOT continuing with grading.
+                $staffGradeTab.find('.staff__grade__form').replaceWith('<div class="staff__grade__form"></div>');
+                this.updateStaffGradeCounts();
+            }
+            else {
+                // Just hide the form currently being shown (no need to update counts).
+                $staffGradeControl.find('.ui-slidable__content').slideUp(
+                    0,  // If transition is visible, the shrinking/growing of the form is seen.
+                    function() {  // This is to work around a JQuery bug (fixed in recent versions of JQuery).
+                        $('.ui-slidable__content').css('overflow', 'visible');
+                    }
+                );
+            }
+
+            // For accessibility, move focus to the staff grade form control.
+            $staffGradeControl.find('.staff__grade__show-form').focus();
         },
 
         /**
@@ -214,32 +289,34 @@
         installHandlers: function() {
             var view = this;
             var $staffArea = $('.openassessment__staff-area', this.element);
-            var $staffTools = $('.openassessment__staff-tools', $staffArea);
-            var $staffInfo =  $('.openassessment__student-info', $staffArea);
+            var $manageLearnersTab = $('.openassessment__staff-tools', $staffArea);
             var $staffGradeTool = $('.openassessment__staff-grading', $staffArea);
 
             if ($staffArea.length <= 0) {
                 return;
             }
 
-            this.baseView.setUpCollapseExpand($staffTools, function() {});
-            this.baseView.setUpCollapseExpand($staffInfo, function() {});
-            this.baseView.setUpCollapseExpand($staffGradeTool, function() {});
-
             // Install a click handler for the staff button panel
             $staffArea.find('.ui-staff__button').click(
                 function(eventObject) {
+                    // Close all other panels first.
+                    $staffArea.find('.ui-staff__button').each(function(index, button) {
+                        if (button !== eventObject.currentTarget) {
+                            var $panel = $staffArea.find('.' + $(button).data('panel')).first();
+                            $panel.slideUp(0);
+                        }
+                    });
+
                     var $button = $(eventObject.currentTarget),
-                        panelClass = $button.data('panel'),
-                        $panel = $staffArea.find('.' + panelClass).first();
+                        $panel = $staffArea.find('.' + $button.data('panel')).first();
+
                     if ($button.hasClass('is--active')) {
                         $button.removeClass('is--active');
-                        $panel.addClass('is--hidden');
+                        $panel.slideUp();
                     } else {
                         $staffArea.find('.ui-staff__button').removeClass('is--active');
                         $button.addClass('is--active');
-                        $staffArea.find('.wrapper--ui-staff').addClass('is--hidden');
-                        $panel.removeClass('is--hidden');
+                        $panel.slideDown();
                     }
                     // For accessibility, move focus to the first focusable component.
                     $panel.find('.ui-staff_close_button').focus();
@@ -252,7 +329,7 @@
                     var $button = $(eventObject.currentTarget),
                         $panel = $button.closest('.wrapper--ui-staff');
                     $staffArea.find('.ui-staff__button').removeClass('is--active');
-                    $panel.addClass('is--hidden');
+                    $panel.slideUp();
 
                     // For accessibility, move focus back to the tab associated with the closed panel.
                     $staffArea.find('.ui-staff__button').each(function(index, button) {
@@ -266,7 +343,7 @@
             );
 
             // Install key handler for student id field
-            $staffTools.find('.openassessment_student_info_form').submit(
+            $manageLearnersTab.find('.openassessment_student_info_form').submit(
                 function(eventObject) {
                     eventObject.preventDefault();
                     view.loadStudentInfo();
@@ -274,7 +351,7 @@
             );
 
             // Install a click handler for requesting student info
-            $staffTools.find('.action--submit-username').click(
+            $manageLearnersTab.find('.action--submit-username').click(
                 function(eventObject) {
                     eventObject.preventDefault();
                     view.loadStudentInfo();
@@ -282,7 +359,7 @@
             );
 
             // Install a click handler for scheduling AI classifier training
-            $staffTools.find('.action--submit-training').click(
+            $manageLearnersTab.find('.action--submit-training').click(
                 function(eventObject) {
                     eventObject.preventDefault();
                     view.scheduleTraining();
@@ -290,7 +367,7 @@
             );
 
             // Install a click handler for rescheduling unfinished AI tasks for this problem
-            $staffTools.find('.action--submit-unfinished-tasks').click(
+            $manageLearnersTab.find('.action--submit-unfinished-tasks').click(
                 function(eventObject) {
                     eventObject.preventDefault();
                     view.rescheduleUnfinishedTasks();
@@ -300,8 +377,11 @@
             // Install a click handler for showing the staff grading form.
             $staffGradeTool.find('.staff__grade__show-form').click(
                 function() {
-                    var wasCollapsed = $staffGradeTool.find('.staff__grade__control').hasClass("is--collapsed");
-                    if (wasCollapsed) {
+                    var wasShowing = $staffGradeTool.find('.staff__grade__control').hasClass("is--showing");
+                    if (wasShowing) {
+                        view.closeStaffGradeForm(false);
+                    }
+                    else {
                         view.loadStaffGradeForm();
                     }
                 }
@@ -481,9 +561,12 @@
             var successCallback = function() {
                 view.baseView.unsavedWarningEnabled(false, view.FULL_GRADE_UNSAVED_WARNING_KEY);
                 view.staffGradeFormLoaded = false;
-                view.loadStaffGradeForm(!continueGrading);
                 if (continueGrading) {
+                    view.loadStaffGradeForm();
                     view.baseView.scrollToTop(".openassessment__staff-area");
+                }
+                else {
+                    view.closeStaffGradeForm(true);
                 }
             };
             this.callStaffAssess(submissionID, rubric, scope, successCallback, '.staff-grade-error', 'full-grade');
